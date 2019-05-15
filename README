@@ -1,0 +1,3 @@
+#DOS object file experiments
+
+So, my idea is that I'd like to generate better visualizations of how objects are linked into binaries by the Borland compiler. So I want to be able to find chunks of binary data in library objects, find their location in the linked binary, and output the location so that I can manually fix things up in IDA. Kind of an experiment in generating FLIRT/FLAIR style data, and then finding it in the executable.
