@@ -56,7 +56,9 @@ enum record_type {
 void skip_padding(std::ifstream& in, uint16_t record_length) {
     size_t offset = in.tellg();
     int record_num = offset / record_length;
-    record_num++;
+    if(offset % record_length > 0) {
+        record_num++;
+    }
     offset = record_num * record_length;
     in.seekg(offset);
 }
@@ -75,8 +77,8 @@ void process_module(std::ifstream& in) {
         std::vector<char> data(h.record_length);
         in.read(data.data(), h.record_length);
         std::cout<<std::hex<<int(h.record_type)<<" "<<int(h.record_length)<<" ";
-        for(auto d:data) {
-            std::cout<<std::hex<<int(d)<<" ";
+        for(uint8_t d:data) {
+            std::cout<<std::hex<<(unsigned int)(d)<<" ";
         }
         std::cout<<"\n";
         if(h.record_type == THEADR && !out.is_open()) {
@@ -108,7 +110,7 @@ void process_library(std::ifstream& in) {
         uint16_t dict_size; //in blocks
         uint8_t flags;
     } h;
-    static_assert(sizeof(lib_header) == 10);
+    //static_assert(sizeof(lib_header) == 10);
     in.read(reinterpret_cast<char *>(&h), sizeof(lib_header));
     if(h.record_type != LIB_HEADER) {
         std::cerr<<"File doesn't look like an OMF library. Exiting.\n";
