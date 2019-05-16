@@ -3,6 +3,7 @@
 #include<vector>
 #include<string>
 #include<cstdint>
+#include<cassert>
 
 enum record_type {
     RHEADR = 0x6e, //obs
@@ -55,6 +56,8 @@ enum record_type {
 
 enum comment_class {
     TRANSLATOR = 0,
+    NEW_OMF = 0xa1,
+    LINK_PASS = 0xa2,
     DEPENDENCY_FILE = 0xe9,
 };
 
@@ -97,9 +100,18 @@ void process_module(std::ifstream& in) {
                     std::string comment_string(&(data[2]), comment_length);
                     switch(comment_class) {
                         case TRANSLATOR:
-                            std::cout<<"COMENT TRANSLATOR: "<<comment_string<<"\n";
+                            std::cout<<"COMENT TRANSLATOR: "<<comment_string.substr(1)<<"\n";
                             break;
-                            
+                        case NEW_OMF:
+                            std::cout<<"COMENT NEW OMF EXTENSION\n";
+                            break;
+                        case LINK_PASS:
+                            std::cout<<"COMENT LINK PASS 2 (data:"; 
+                            for(unsigned char d:comment_string) {
+                                std::cout<<std::hex<<int(d)<<" ";
+                            }
+                            std::cout<<")\n";
+                            break;
                         case DEPENDENCY_FILE: {
                                 if(!comment_length) {
                                     std::cout<<"COMENT DEPENDENCY, length 0\n";
@@ -122,25 +134,40 @@ void process_module(std::ifstream& in) {
 
                 }
                 break;
+            case MODEND:
+                std::cout<<"MODEND (TODO)\n";
+                break;
+            case PUBDEF:
+                std::cout<<"PUBDEF (TODO)\n";
+                break;
+            case LINNUM:
+                std::cout<<"LINNUM (TODO)\n";
+                break;
             case LNAMES: {
                     size_t start_offset = 0;
-                    size_t str_index = 0;
                     size_t remaining = h.record_length - 1;
                     std::cout<<"LNAMES length: "<<h.record_length<<std::endl;
-                    namelist.resize(0);
                     while(remaining > 0) {
                         size_t str_len = data[start_offset];
                         std::string str(&data[start_offset+1], str_len);
                         namelist.push_back(str);
-                        std::cout<<"\t"<<str_index<<": "<<str<<"\n";
+                        std::cout<<"\t"<<namelist.size()<<": "<<str<<"\n";
                         remaining -= (str_len + 1);
-                        str_index++;
                         start_offset += (str_len + 1);
                     }
                 }
                 break;
             case SEGDEF:
-                
+                std::cout<<"SEGDEF (TODO)\n";   
+                break;
+            case GRPDEF:
+                std::cout<<"GRPDEF (TODO)\n";
+                break;
+            case FIXUPP:
+                std::cout<<"FIXUPP record (TODO)\n";
+                break;
+            case LEDATA:
+                std::cout<<"LEDATA (TODO)\n";
                 break;
             default:
                 std::cout<<std::hex<<int(h.record_type)<<" (unknown) length: "<<std::dec<<int(h.record_length)<<" data: ";
