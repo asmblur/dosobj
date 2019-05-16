@@ -58,6 +58,15 @@ enum comment_class {
     DEPENDENCY_FILE = 0xe9,
 };
 
+struct segdef {
+    uint8_t attributes;
+    uint16_t length;
+    uint8_t name_index;
+    uint8_t class_name_index;
+    uint8_t overlay_name_index;
+    uint8_t checksum;
+};
+
 void process_module(std::ifstream& in) {
     std::cout<<"START MODULE\n";
     struct __attribute__((packed)) record_header {
@@ -69,6 +78,8 @@ void process_module(std::ifstream& in) {
         std::cerr<<"File doesn't look like an OMF object\n";
         return;
     }
+    std::vector<std::string> namelist(0);
+    std::vector<segdef> seglist(0);
     while(h.record_type != MODEND) {
         in.read(reinterpret_cast<char *>(&h), sizeof(record_header));
         std::vector<char> data(h.record_length);
@@ -110,6 +121,26 @@ void process_module(std::ifstream& in) {
                     }
 
                 }
+                break;
+            case LNAMES: {
+                    size_t start_offset = 0;
+                    size_t str_index = 0;
+                    size_t remaining = h.record_length - 1;
+                    std::cout<<"LNAMES length: "<<h.record_length<<std::endl;
+                    namelist.resize(0);
+                    while(remaining > 0) {
+                        size_t str_len = data[start_offset];
+                        std::string str(&data[start_offset+1], str_len);
+                        namelist.push_back(str);
+                        std::cout<<"\t"<<str_index<<": "<<str<<"\n";
+                        remaining -= (str_len + 1);
+                        str_index++;
+                        start_offset += (str_len + 1);
+                    }
+                }
+                break;
+            case SEGDEF:
+                
                 break;
             default:
                 std::cout<<std::hex<<int(h.record_type)<<" (unknown) length: "<<std::dec<<int(h.record_length)<<" data: ";
