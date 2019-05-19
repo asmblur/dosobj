@@ -168,10 +168,19 @@ void process_module(std::ifstream& in) {
                 }
                 break;
             case SEGDEF:
-                std::cout<<"SEGDEF (TODO)\n";   
+                std::cout<<"SEGDEF attributes: "<<std::hex<<int(data[0])<<" length: "<<(uint16_t(data[2])*256 + uint16_t(data[1]))<<" seg name: "<<namelist[data[3]-1]<<" class name: "<<namelist[data[4]-1]<<" overlay name: "<<namelist[data[5]-1]<<"\n";
+                seglist.emplace_back(segdef{uint8_t(data[0]),uint16_t(uint16_t(data[2])*256+uint16_t(data[1])),uint8_t(data[3]),uint8_t(data[4]),uint8_t(data[5]),uint8_t(data[6])});
                 break;
             case GRPDEF:
-                std::cout<<"GRPDEF (TODO)\n";
+                {
+                    std::cout<<"GRPDEF name: "<<namelist[data[0]-1]<<" segments: ";
+                    int index = 1;
+                    while(data[index] == -1) {
+                        std::cout<<std::hex<<int(data[index+1])<<"("<<namelist[seglist[data[index+1]-1].name_index - 1]<<") ";
+                        index+=2;
+                    }
+                    std::cout<<"\n";
+                }
                 break;
             case FIXUPP:
                 std::cout<<"FIXUPP record (TODO)\n";
