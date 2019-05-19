@@ -125,9 +125,19 @@ void process_module(std::ifstream& in) {
                             break;
                             
                         default:
-                            std::cout<<"COMENT length: "<<std::dec<<comment_length<<" type: "<<std::hex<<int(comment_type)<<" class: "<<int(comment_class)<<" data: ";
+                            std::cout<<"COMENT length: "<<std::dec<<comment_length<<" type: "<<std::hex<<int(comment_type)<<" class: "<<int(comment_class)<<" data: \n\t";
                             for(unsigned char d:comment_string) {
-                                std::cout<<std::hex<<int(d)<<" ";
+                                if(d >= 0x20 && d < 0x7f) {
+                                    std::cout<<"  "<<d;
+                                }
+                                else {
+                                    std::cout<<"  .";
+                                }
+                            }
+                            std::cout<<"\n\t";
+                            for(unsigned char d:comment_string) {
+                                std::printf(" %02X", d);
+                                //std::cout<<std::hex<<" "<<int(d);
                             }
                             std::cout<<"\n";
                     }
