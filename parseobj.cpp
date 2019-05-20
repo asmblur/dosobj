@@ -70,6 +70,11 @@ struct segdef {
     uint8_t checksum;
 };
 
+struct grpdef {
+    uint8_t name_index;
+    std::vector<uint8_t> seg_index;
+};
+
 void process_module(std::ifstream& in) {
     std::cout<<"START MODULE\n";
     struct __attribute__((packed)) record_header {
@@ -81,8 +86,11 @@ void process_module(std::ifstream& in) {
         std::cerr<<"File doesn't look like an OMF object\n";
         return;
     }
+
     std::vector<std::string> namelist(0);
     std::vector<segdef> seglist(0);
+    std::vector<grpdef> grplist(0);
+
     while(h.record_type != MODEND) {
         in.read(reinterpret_cast<char *>(&h), sizeof(record_header));
         std::vector<char> data(h.record_length);
@@ -175,15 +183,97 @@ void process_module(std::ifstream& in) {
                 {
                     std::cout<<"GRPDEF name: "<<namelist[data[0]-1]<<" segments: ";
                     int index = 1;
+                    grplist.emplace_back(grpdef{uint8_t(data[0]),std::vector<uint8_t>(0)});
                     while(data[index] == -1) {
                         std::cout<<std::hex<<int(data[index+1])<<"("<<namelist[seglist[data[index+1]-1].name_index - 1]<<") ";
+                        grplist.back().seg_index.push_back(uint8_t(data[index+1]));
                         index+=2;
                     }
                     std::cout<<"\n";
                 }
                 break;
             case FIXUPP:
-                std::cout<<"FIXUPP record (TODO)\n";
+                {
+                    std::cout<<"FIXUPP "<<std::hex<<int(h.record_type)<<" (unknown) length: "<<std::dec<<int(h.record_length)<<" data:\n";
+                    int index = 0;
+                    while(index < data.size()) {
+                        if((uint8_t(data[index]) & 0x80) == 0x80) { //FIXUP subrecord
+                            std::cout<<"\tFIXUP";
+                            if((uint8_t(data[index]) & 0x40) == 0x40) {
+                                std::cout<<" (rel to seg)";
+                            }
+                            else {
+                                std::cout<<" (rel to self)";
+                            }
+                            switch(uint8_t(data[index])/4 & 0x0f) {
+                            case 0:
+                                std::cout<<" low-order byte";
+                                break;
+                            case 1:
+                                std::cout<<" 16-bit offset";
+                                break;
+                            case 2:
+                                std::cout<<" 16-bit base";
+                                break;
+                            case 3:
+                                std::cout<<" 32-bit pointer";
+                                break;
+                            case 4:
+                                std::cout<<" high-order byte";
+                                break;
+                            case 5:
+                                std::cout<<" 16-bit loader-resolved";
+                                break;
+                            case 6:
+                                std::cout<<" reserved (6)";
+                                break;
+                            case 7:
+                                std::cout<<" reserved (7)";
+                                break;
+                            case 8:
+                                std::cout<<" reserved (8)";
+                                break;
+                            case 9:
+                                std::cout<<" 32-bit offset";
+                                break;
+                            case 10:
+                                std::cout<<" reserved (10)";
+                                break;
+                            case 11:
+                                std::cout<<" 48-bit pointer";
+                                break;
+                            case 12:
+                                std::cout<<" reserved (12)";
+                                break;
+                            case 13:
+                                std::cout<<" 32-bit loader-resolved";
+                                break;
+                            default:
+                                std::cout<<" derp. Skipping rest of entries.\n";
+                                index = data.size();
+                            }
+                            uint16_t location = (uint16_t(data[0]) & 0x03) * 256 + uint16_t(data[1]);
+                            std::cout<<" location: "<<std::hex<<location;
+                            std::cout<<" Yep, still working on it.\n";
+                            index = data.size();
+                        }
+                        else { //THREAD subrecord
+                            std::cout<<"\tTHREAD";
+                            if((uint8_t(data[index]) & 0x40) == 0x40) { //FRAME thread
+                                std::cout<<" (FRAME)";
+                            }
+                            else { //TARGET thread
+                                std::cout<<" (TARGET)";
+                            }
+                            std::cout<<" (haven't figured out size of the record, so I'm skipping the rest of the thing)\n";
+                            index = data.size();
+                        }
+                    }
+                    for(unsigned char d:data) {
+                        std::cout<<std::hex<<int(d)<<" ";
+                    }
+                    std::cout<<"\n";
+                }
                 break;
             case LEDATA:
                 std::cout<<"LEDATA (TODO)\n";
