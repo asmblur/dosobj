@@ -276,7 +276,13 @@ void process_module(std::ifstream& in) {
                 }
                 break;
             case LEDATA:
-                std::cout<<"LEDATA (TODO)\n";
+                std::cout<<"LEDATA length: "<<data.size() - 4<<" segment: "<<(unsigned int)(data[0])<<"("<<namelist[seglist[data[0] - 1].name_index - 1]<<") at offset: "<<((uint16_t(data[2]) * 256) + (uint16_t(data[1])))<<"\n";
+                for(int i=3;i<data.size()-1;i++) {
+                    if(((i-3) % 32) == 0) std::cout<<std::hex<<i-3<<"\t";
+                    std::printf("%02x ", uint8_t(data[i]));
+                    if(((i-2)%32) == 0) std::cout<<"\n";
+                }
+                std::cout<<"\n";
                 break;
             default:
                 std::cout<<std::hex<<int(h.record_type)<<" (unknown) length: "<<std::dec<<int(h.record_length)<<" data: ";
